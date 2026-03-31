@@ -347,18 +347,19 @@ def inject_styles(theme_mode: str) -> None:
             margin-bottom: 2.8rem;
         }}
         .floating-appearance-panel {{
-            position: fixed;
-            top: 5.4rem;
-            left: 1rem;
-            z-index: 2147483000;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            left: auto;
+            z-index: 8;
             display: inline-flex;
             align-items: center;
-            gap: 0.45rem;
-            padding: 0.42rem;
+            gap: 0.28rem;
+            padding: 0.26rem;
             border-radius: 999px;
             background: var(--glass-bg-strong);
             border: 1px solid var(--border);
-            box-shadow: 0 16px 36px var(--glass-shadow);
+            box-shadow: 0 14px 28px var(--glass-shadow);
             backdrop-filter: blur(18px);
             pointer-events: auto;
         }}
@@ -366,15 +367,26 @@ def inject_styles(theme_mode: str) -> None:
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 4.4rem;
-            padding: 0.48rem 0.9rem;
+            width: 2.6rem;
+            height: 2.6rem;
+            min-width: 2.6rem;
+            padding: 0;
             border-radius: 999px;
             color: var(--widget-ink);
             text-decoration: none !important;
             border: 1px solid transparent;
-            white-space: nowrap;
             -webkit-text-fill-color: var(--widget-ink);
             transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }}
+        .appearance-link svg {{
+            width: 1.08rem;
+            height: 1.08rem;
+            color: currentColor;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }}
         .appearance-link:link,
         .appearance-link:visited,
@@ -645,8 +657,8 @@ def inject_styles(theme_mode: str) -> None:
         }}
         @media (max-width: 900px) {{
             .floating-appearance-panel {{
-                left: 0.75rem;
-                top: 5.15rem;
+                top: 0.75rem;
+                right: 0.75rem;
             }}
             .banner-nav {{
                 width: calc(100% - 1rem);
@@ -783,17 +795,6 @@ def inject_header_runtime_fix(theme_mode: str) -> None:
 
                 getHeaderControls(doc).forEach(styleControl);
 
-                const panelDoc = parentDoc || document;
-                const panel = panelDoc.querySelector(".floating-appearance-panel");
-                if (panel) {{
-                    const header =
-                        doc.querySelector('[data-testid="stHeader"]') ||
-                        doc.querySelector("header");
-                    const headerBottom = header ? header.getBoundingClientRect().bottom : 72;
-                    panel.style.top = `${{Math.max(headerBottom + 10, 72)}}px`;
-                    panel.style.left = "1rem";
-                    panel.style.zIndex = "2147483000";
-                }}
             }}
 
             applyFix();
@@ -884,12 +885,27 @@ def app_href(page: str, theme_mode: str) -> str:
     return f"?{urlencode({'page': page, 'theme': theme_mode})}"
 
 
+def appearance_icon(mode: str) -> str:
+    if mode == "Dark":
+        return (
+            "<svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'>"
+            "<path d='M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z'></path>"
+            "</svg>"
+        )
+    return (
+        "<svg viewBox='0 0 24 24' aria-hidden='true' focusable='false'>"
+        "<circle cx='12' cy='12' r='4'></circle>"
+        "<path d='M12 2v2.2M12 19.8V22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2 12h2.2M19.8 12H22M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6'></path>"
+        "</svg>"
+    )
+
+
 def render_app_shell(current_page: str, theme_mode: str) -> None:
     appearance_links = []
     for option in ["Dark", "Light"]:
         active_class = "active" if option == theme_mode else ""
         appearance_links.append(
-            f"<a class='appearance-link {active_class}' href='{app_href(current_page, option)}' target='_self'>{option}</a>"
+            f"<a class='appearance-link {active_class}' href='{app_href(current_page, option)}' target='_self' aria-label='Switch to {option} mode'>{appearance_icon(option)}</a>"
         )
 
     nav_links = []
