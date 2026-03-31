@@ -385,7 +385,30 @@ def inject_styles(theme_mode: str) -> None:
             border: 1px solid var(--primary-button-bg) !important;
             box-shadow: 0 10px 24px var(--shadow) !important;
         }}
+        .stFormSubmitButton button,
+        .stFormSubmitButton button *,
+        button[data-testid="stBaseButton-primaryFormSubmit"],
+        button[data-testid="stBaseButton-primaryFormSubmit"] *,
+        button[data-testid="stBaseButton-secondaryFormSubmit"],
+        button[data-testid="stBaseButton-secondaryFormSubmit"] *,
+        button[data-testid="stBaseButton-tertiaryFormSubmit"],
+        button[data-testid="stBaseButton-tertiaryFormSubmit"] * {{
+            color: var(--primary-button-ink) !important;
+            -webkit-text-fill-color: var(--primary-button-ink) !important;
+        }}
+        .stFormSubmitButton button,
+        button[data-testid="stBaseButton-primaryFormSubmit"] {{
+            background: var(--primary-button-bg) !important;
+            border: 1px solid var(--primary-button-bg) !important;
+            box-shadow: 0 10px 24px var(--shadow) !important;
+        }}
         button[data-testid^="baseButton-primary"]:hover {{
+            background: var(--primary-button-hover-bg) !important;
+            color: var(--primary-button-ink) !important;
+            border: 1px solid var(--primary-button-hover-bg) !important;
+        }}
+        .stFormSubmitButton button:hover,
+        button[data-testid="stBaseButton-primaryFormSubmit"]:hover {{
             background: var(--primary-button-hover-bg) !important;
             color: var(--primary-button-ink) !important;
             border: 1px solid var(--primary-button-hover-bg) !important;
