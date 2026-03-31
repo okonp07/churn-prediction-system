@@ -40,6 +40,8 @@ DARK_THEME = {
     "widget_bg_soft": "rgba(30, 30, 30, 0.98)",
     "widget_ink": "#fff5bf",
     "caption_ink": "#d8c77c",
+    "code_bg": "rgba(244, 196, 48, 0.14)",
+    "code_ink": "#fff5bf",
     "primary_button_bg": "#f4c430",
     "primary_button_ink": "#050505",
     "primary_button_hover_bg": "#ffd54f",
@@ -76,6 +78,8 @@ LIGHT_THEME = {
     "widget_bg_soft": "#fffaf0",
     "widget_ink": "#050505",
     "caption_ink": "#050505",
+    "code_bg": "#fff7de",
+    "code_ink": "#050505",
     "primary_button_bg": "#050505",
     "primary_button_ink": "#ffffff",
     "primary_button_hover_bg": "#1a1a1a",
@@ -148,6 +152,8 @@ def inject_styles(theme_mode: str) -> None:
             --widget-bg-soft: {widget_bg_soft};
             --widget-ink: {widget_ink};
             --caption-ink: {caption_ink};
+            --code-bg: {code_bg};
+            --code-ink: {code_ink};
             --primary-button-bg: {primary_button_bg};
             --primary-button-ink: {primary_button_ink};
             --primary-button-hover-bg: {primary_button_hover_bg};
@@ -364,6 +370,23 @@ def inject_styles(theme_mode: str) -> None:
         .caption-note {{
             color: var(--caption-ink);
             font-size: 0.95rem;
+        }}
+        .stMarkdown code,
+        p code,
+        li code {{
+            background: var(--code-bg) !important;
+            color: var(--code-ink) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 0.5rem !important;
+            padding: 0.12rem 0.38rem !important;
+            -webkit-text-fill-color: var(--code-ink) !important;
+        }}
+        .stMarkdown pre,
+        .stMarkdown pre code {{
+            background: var(--widget-bg-soft) !important;
+            color: var(--code-ink) !important;
+            border-color: var(--border) !important;
+            -webkit-text-fill-color: var(--code-ink) !important;
         }}
         .stDownloadButton > button,
         .stButton > button,
