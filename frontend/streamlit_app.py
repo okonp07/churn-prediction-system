@@ -1413,15 +1413,33 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
     validation_metrics = model_info["validation_metrics"]
     class_labels = [str(item) for item in model_info["task_detection"]["classes"]]
 
-    histogram = px.histogram(
-        train_df,
-        x="churn_risk_score",
-        color="churn_risk_score",
-        title="Observed Churn Risk Distribution (Normalized 1-5 Scale)",
-        color_discrete_sequence=["#f4c430", "#eab308", "#ca8a04", "#fde68a", "#facc15", "#f59e0b"],
+    churn_distribution = (
+        train_df["churn_risk_score"]
+        .value_counts()
+        .sort_index()
+        .rename_axis("churn_risk_score")
+        .reset_index(name="count")
     )
-    apply_plotly_theme(histogram, theme)
-    st.plotly_chart(histogram, use_container_width=True)
+    churn_distribution["churn_risk_score"] = churn_distribution["churn_risk_score"].astype(str)
+
+    distribution_chart = px.bar(
+        churn_distribution,
+        x="churn_risk_score",
+        y="count",
+        color="churn_risk_score",
+        text="count",
+        title="Observed Churn Risk Distribution (Normalized 1-5 Scale)",
+        category_orders={"churn_risk_score": ["1", "2", "3", "4", "5"]},
+        color_discrete_sequence=["#eab308", "#f4c430", "#fde68a", "#facc15", "#ca8a04"],
+    )
+    distribution_chart.update_traces(textposition="outside")
+    distribution_chart.update_layout(
+        xaxis_title="churn_risk_score",
+        yaxis_title="count",
+        bargap=0.35,
+    )
+    apply_plotly_theme(distribution_chart, theme)
+    st.plotly_chart(distribution_chart, use_container_width=True)
     st.markdown(
         """
         <div class="content-card">
