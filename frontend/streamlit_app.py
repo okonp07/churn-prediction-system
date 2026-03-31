@@ -1240,16 +1240,58 @@ def render_prediction_page(predictor: PredictorService, theme_mode: str) -> None
         st.plotly_chart(
             apply_plotly_theme(
                 px.bar(
-                probability_frame,
-                x="class",
-                y="probability",
-                color="probability",
-                color_continuous_scale=YELLOW_SCALE,
-                title="Per-Class Probability Distribution",
+                    probability_frame,
+                    x="class",
+                    y="probability",
+                    color="probability",
+                    color_continuous_scale=YELLOW_SCALE,
+                    title="Per-Class Probability Distribution",
                 ),
                 theme,
             ),
             use_container_width=True,
+        )
+        ranked_probabilities = probability_frame.sort_values("probability", ascending=False).reset_index(drop=True)
+        strongest_class = ranked_probabilities.loc[0, "class"]
+        strongest_probability = float(ranked_probabilities.loc[0, "probability"])
+        if len(ranked_probabilities) > 1:
+            second_probability = float(ranked_probabilities.loc[1, "probability"])
+            probability_gap = strongest_probability - second_probability
+        else:
+            probability_gap = strongest_probability
+
+        if probability_gap >= 0.35:
+            certainty_note = (
+                "The tallest bar stands clearly above the rest, which means the system is fairly confident "
+                "about this customer's current churn level."
+            )
+        elif probability_gap >= 0.15:
+            certainty_note = (
+                "One class is leading, but the result still leaves some room for uncertainty, so this customer "
+                "may sit near the border between nearby risk levels."
+            )
+        else:
+            certainty_note = (
+                "Several bars are fairly close together, which means the customer shows a mixed pattern and the "
+                "prediction should be read as directional guidance rather than a perfectly sharp category."
+            )
+
+        st.markdown(
+            f"""
+            <div class="content-card">
+                <h3>What this chart means</h3>
+                <p>
+                    This chart shows how strongly the system considered each possible churn score from <strong>1</strong>
+                    to <strong>5</strong> for this customer. Taller bars mean that score looked more likely to the model.
+                    In this case, score <strong>{strongest_class}</strong> is the strongest signal, so the system leans
+                    most toward that outcome.
+                </p>
+                <p>
+                    {certainty_note}
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
 
