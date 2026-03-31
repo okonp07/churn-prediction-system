@@ -1298,6 +1298,20 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
     )
     apply_plotly_theme(histogram, theme)
     st.plotly_chart(histogram, use_container_width=True)
+    st.markdown(
+        """
+        <div class="content-card">
+            <h3>What this chart means</h3>
+            <p>
+                This chart shows how customers are currently spread across the churn risk classes in the training
+                data. Taller bars mean more customers fall into that risk level. A non-technical viewer can read this
+                as the model's starting view of the business: which churn levels are common, which are rare, and
+                whether the system is mostly dealing with low-risk, medium-risk, or high-risk customers.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     importance_chart = px.bar(
         importance_frame.head(12),
@@ -1310,6 +1324,21 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
     )
     apply_plotly_theme(importance_chart, theme)
     st.plotly_chart(importance_chart, use_container_width=True)
+    st.markdown(
+        """
+        <div class="content-card">
+            <h3>What this chart means</h3>
+            <p>
+                This chart shows which customer signals influenced the model the most overall. Longer bars mean the
+                model relied more heavily on that factor when estimating churn risk. For a business audience, this is
+                the quickest way to see what the system pays attention to most, such as membership behavior, feedback,
+                complaints, or engagement. These are importance signals, not proof of cause, but they are strong clues
+                for where teams should focus retention action.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     confusion_matrix_values = validation_metrics.get("confusion_matrix", [])
     if confusion_matrix_values:
@@ -1328,6 +1357,21 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
             yaxis_title="Actual Class",
         )
         st.plotly_chart(confusion_chart, use_container_width=True)
+        st.markdown(
+            """
+            <div class="content-card">
+                <h3>What this chart means</h3>
+                <p>
+                    This grid compares the true churn class of each customer with the class predicted by the model.
+                    The strongest performance appears along the diagonal, where predicted and actual classes match.
+                    Numbers away from that diagonal are the model's mistakes. In simple terms, this chart helps a
+                    lay person see whether the system is correctly separating safer customers from riskier ones and
+                    which risk bands the model still tends to confuse.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         actual_counts = confusion_df.sum(axis=1).reset_index()
         actual_counts.columns = ["class", "count"]
@@ -1351,6 +1395,40 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
             yaxis_title="Count",
         )
         st.plotly_chart(support_chart, use_container_width=True)
+        st.markdown(
+            """
+            <div class="content-card">
+                <h3>What this chart means</h3>
+                <p>
+                    This chart compares the number of customers that truly belong to each risk class with the number
+                    the model predicted for each class. When the paired bars are close, the system is capturing the
+                    business's real risk mix well. When they are far apart, the model is over-predicting or
+                    under-predicting some customer groups. That makes this chart especially useful for spotting bias
+                    toward certain churn levels.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        """
+        <div class="content-card">
+            <h3>Next Steps</h3>
+            <p>
+                The best path to stronger performance is to improve both signal quality and decision discipline. That
+                means expanding the data with richer engagement trends, transaction history patterns, service-touch
+                history, and more recent behavior snapshots; running deeper hyperparameter tuning with stricter
+                cross-validation so gains are real and not overfitted; testing additional ordinal-aware or calibrated
+                ensemble approaches; and improving class-balance handling for the rarest risk tiers. Beyond model
+                accuracy, the system can be made better by adding drift monitoring, scheduled retraining, retention
+                campaign outcome tracking, human review loops for high-risk cases, and feedback collection to learn
+                which recommendations actually prevent churn in production.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_about_page() -> None:
