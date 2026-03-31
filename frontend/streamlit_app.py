@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import json
 from pathlib import Path
+from urllib.parse import urlencode
 
 import pandas as pd
 import plotly.express as px
@@ -16,6 +17,7 @@ from app.services.predictor import PredictorService
 BANNER_PATH = PROJECT_ROOT / "Churn Prediction Engine.png"
 AUTHOR_IMAGE_PATH = PROJECT_ROOT / "frontend" / "assets" / "okon_prince.png"
 TESTING_PACK_PATH = PROJECT_ROOT / "artifacts" / "sample_outputs" / "model_testing_pack.csv"
+APP_PAGES = ["Overview", "Predict", "Batch Scoring", "Model Insights", "About"]
 YELLOW_SCALE = ["#3B2D00", "#7A5C00", "#D7A700", "#F4C430", "#FFE27A"]
 DARK_THEME = {
     "bg": "#050505",
@@ -42,6 +44,9 @@ DARK_THEME = {
     "caption_ink": "#d8c77c",
     "code_bg": "rgba(244, 196, 48, 0.14)",
     "code_ink": "#fff5bf",
+    "glass_bg": "rgba(13, 13, 13, 0.48)",
+    "glass_bg_strong": "rgba(18, 18, 18, 0.78)",
+    "glass_shadow": "rgba(0, 0, 0, 0.35)",
     "primary_button_bg": "#f4c430",
     "primary_button_ink": "#050505",
     "primary_button_hover_bg": "#ffd54f",
@@ -80,6 +85,9 @@ LIGHT_THEME = {
     "caption_ink": "#050505",
     "code_bg": "#fff7de",
     "code_ink": "#050505",
+    "glass_bg": "rgba(255, 255, 255, 0.42)",
+    "glass_bg_strong": "rgba(255, 252, 237, 0.86)",
+    "glass_shadow": "rgba(184, 134, 11, 0.18)",
     "primary_button_bg": "#050505",
     "primary_button_ink": "#ffffff",
     "primary_button_hover_bg": "#1a1a1a",
@@ -154,6 +162,9 @@ def inject_styles(theme_mode: str) -> None:
             --caption-ink: {caption_ink};
             --code-bg: {code_bg};
             --code-ink: {code_ink};
+            --glass-bg: {glass_bg};
+            --glass-bg-strong: {glass_bg_strong};
+            --glass-shadow: {glass_shadow};
             --primary-button-bg: {primary_button_bg};
             --primary-button-ink: {primary_button_ink};
             --primary-button-hover-bg: {primary_button_hover_bg};
@@ -161,6 +172,17 @@ def inject_styles(theme_mode: str) -> None:
         .stApp {{
             background: {app_bg};
             color: var(--ink);
+        }}
+        [data-testid="stSidebar"],
+        section[data-testid="stSidebar"],
+        [data-testid="collapsedControl"] {{
+            display: none !important;
+        }}
+        [data-testid="stAppViewContainer"] > .main {{
+            margin-left: 0 !important;
+        }}
+        .block-container {{
+            padding-top: 1.75rem !important;
         }}
         [data-testid="stHeader"] {{
             background: transparent;
@@ -319,6 +341,90 @@ def inject_styles(theme_mode: str) -> None:
             border: 1px solid var(--border);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
             margin-bottom: 1rem;
+        }}
+        .app-shell {{
+            position: relative;
+            margin-bottom: 2.8rem;
+        }}
+        .floating-appearance-panel {{
+            position: fixed;
+            top: 0.95rem;
+            left: 1rem;
+            z-index: 999;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.42rem;
+            border-radius: 999px;
+            background: var(--glass-bg-strong);
+            border: 1px solid var(--border);
+            box-shadow: 0 16px 36px var(--glass-shadow);
+            backdrop-filter: blur(18px);
+        }}
+        .appearance-link {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 4.4rem;
+            padding: 0.48rem 0.9rem;
+            border-radius: 999px;
+            color: var(--ink);
+            text-decoration: none;
+            border: 1px solid transparent;
+            transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }}
+        .appearance-link:hover {{
+            background: var(--glass-bg);
+            color: var(--accent);
+        }}
+        .appearance-link.active {{
+            background: var(--glass-bg);
+            color: var(--accent);
+            border-color: var(--border);
+        }}
+        .banner-shell {{
+            position: relative;
+            margin-bottom: 4rem;
+        }}
+        .banner-shell .project-banner {{
+            margin-bottom: 0;
+        }}
+        .banner-nav {{
+            position: absolute;
+            left: 50%;
+            bottom: -1.55rem;
+            transform: translateX(-50%);
+            width: min(92%, 1100px);
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            z-index: 4;
+        }}
+        .glass-nav-button {{
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 9.6rem;
+            padding: 0.82rem 1.2rem;
+            border-radius: 999px;
+            color: var(--ink);
+            text-decoration: none;
+            background: var(--glass-bg);
+            border: 1px solid var(--border);
+            box-shadow: 0 16px 36px var(--glass-shadow);
+            backdrop-filter: blur(18px);
+            transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+        }}
+        .glass-nav-button:hover {{
+            transform: translateY(-1px);
+            background: var(--glass-bg-strong);
+            color: var(--accent);
+        }}
+        .glass-nav-button.active {{
+            background: var(--glass-bg-strong);
+            color: var(--accent);
+            border-color: var(--accent);
         }}
         .recommendation-card {{
             background: linear-gradient(90deg, rgba(244, 196, 48, 0.12), rgba(244, 196, 48, 0.03));
@@ -509,6 +615,20 @@ def inject_styles(theme_mode: str) -> None:
             color: var(--widget-ink) !important;
             border: 1px solid var(--border) !important;
         }}
+        @media (max-width: 900px) {{
+            .floating-appearance-panel {{
+                left: 0.75rem;
+                top: 0.75rem;
+            }}
+            .banner-nav {{
+                width: calc(100% - 1.5rem);
+                bottom: -2rem;
+            }}
+            .glass-nav-button {{
+                min-width: 8rem;
+                padding: 0.7rem 1rem;
+            }}
+        }}
         </style>
     """.format_map(theme)
     st.markdown(
@@ -697,6 +817,69 @@ def render_banner() -> None:
         )
 
 
+def _query_value(value: str | list[str] | None, default: str) -> str:
+    if isinstance(value, list):
+        return value[0] if value else default
+    if value is None:
+        return default
+    return str(value)
+
+
+def app_shell_state() -> tuple[str, str]:
+    page = _query_value(st.query_params.get("page"), "Overview")
+    theme_mode = _query_value(st.query_params.get("theme"), "Dark")
+    if page not in APP_PAGES:
+        page = "Overview"
+    if theme_mode not in {"Dark", "Light"}:
+        theme_mode = "Dark"
+    return page, theme_mode
+
+
+def app_href(page: str, theme_mode: str) -> str:
+    return f"?{urlencode({'page': page, 'theme': theme_mode})}"
+
+
+def render_app_shell(current_page: str, theme_mode: str) -> None:
+    appearance_links = []
+    for option in ["Dark", "Light"]:
+        active_class = "active" if option == theme_mode else ""
+        appearance_links.append(
+            f"<a class='appearance-link {active_class}' href='{app_href(current_page, option)}' target='_self'>{option}</a>"
+        )
+
+    nav_links = []
+    for page in APP_PAGES:
+        active_class = "active" if page == current_page else ""
+        nav_links.append(
+            f"<a class='glass-nav-button {active_class}' href='{app_href(page, theme_mode)}' target='_self'>{page}</a>"
+        )
+
+    if BANNER_PATH.exists():
+        banner_b64 = encode_image(str(BANNER_PATH))
+        banner_visual = (
+            f"<img class='project-banner' src='data:image/png;base64,{banner_b64}' alt='Churn Prediction Engine banner' />"
+        )
+    else:
+        banner_visual = "<div class='project-banner' style='height:240px;background:var(--glass-bg-strong);'></div>"
+
+    st.markdown(
+        f"""
+        <div class="app-shell">
+            <div class="floating-appearance-panel">
+                {''.join(appearance_links)}
+            </div>
+            <div class="banner-shell">
+                {banner_visual}
+                <div class="banner-nav">
+                    {''.join(nav_links)}
+                </div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_metric_card(title: str, value: str, note: str) -> None:
     st.markdown(
         f"""
@@ -745,7 +928,6 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
     test_report = metrics_payload["test_validation_report"]
     top_features = [item["base_feature"] for item in model_info["global_feature_importance"][:3]]
 
-    render_banner()
     st.markdown(
         """
         <div class="hero-card">
@@ -1106,7 +1288,6 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
 
 
 def render_about_page() -> None:
-    render_banner()
     st.subheader("About")
 
     st.markdown(
@@ -1249,16 +1430,12 @@ def render_about_page() -> None:
 
 
 def main() -> None:
-    theme_mode = st.sidebar.radio("Appearance", ["Dark", "Light"], index=0)
+    page, theme_mode = app_shell_state()
     inject_styles(theme_mode)
     inject_header_runtime_fix(theme_mode)
+    render_app_shell(page, theme_mode)
     predictor = load_predictor()
     metrics_payload = load_metrics()
-
-    page = st.sidebar.radio(
-        "Navigate",
-        ["Overview", "Predict", "Batch Scoring", "Model Insights", "About"],
-    )
 
     if page == "Overview":
         render_overview_page(predictor, metrics_payload)
