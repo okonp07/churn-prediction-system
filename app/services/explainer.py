@@ -5,7 +5,11 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import shap
+
+try:
+    import shap
+except ImportError:  # pragma: no cover - exercised indirectly when dependency is absent
+    shap = None
 
 
 TREE_MODEL_NAMES = {"XGBClassifier", "XGBRegressor", "LGBMClassifier", "LGBMRegressor", "RandomForestClassifier", "RandomForestRegressor"}
@@ -21,7 +25,9 @@ class ExplainerService:
         self.estimator = self.model_pipeline.named_steps["model"]
 
     @lru_cache(maxsize=1)
-    def _get_shap_explainer(self) -> shap.Explainer | None:
+    def _get_shap_explainer(self) -> Any | None:
+        if shap is None:
+            return None
         try:
             estimator_name = self.estimator.__class__.__name__
             if estimator_name in TREE_MODEL_NAMES:

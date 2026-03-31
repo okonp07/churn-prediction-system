@@ -11,15 +11,26 @@ import pandas as pd
 class TargetManager:
     task_type: str = ""
     classes_: list[Any] = field(default_factory=list)
+    source_classes_: list[Any] = field(default_factory=list)
     target_min_: float | None = None
     target_max_: float | None = None
+    normalization_map_: dict[Any, Any] = field(default_factory=dict)
     strategy_details_: dict[str, Any] = field(default_factory=dict)
 
-    def fit(self, target: pd.Series) -> "TargetManager":
+    def fit(
+        self,
+        target: pd.Series,
+        original_target: pd.Series | None = None,
+        normalization_map: dict[Any, Any] | None = None,
+    ) -> "TargetManager":
         clean_target = target.dropna()
+        source_target = original_target.dropna() if original_target is not None else clean_target
         unique_values = np.sort(clean_target.unique())
+        source_unique_values = np.sort(source_target.unique())
         is_numeric = pd.api.types.is_numeric_dtype(clean_target)
         integer_like = is_numeric and np.allclose(unique_values, np.round(unique_values))
+        self.source_classes_ = source_unique_values.tolist()
+        self.normalization_map_ = dict(normalization_map or {})
 
         if len(unique_values) == 2:
             self.task_type = "binary_classification"
@@ -36,10 +47,19 @@ class TargetManager:
             self.target_max_ = float(clean_target.max())
 
         self.strategy_details_ = {
+            "source_unique_values": source_unique_values.tolist(),
             "unique_values": unique_values.tolist(),
             "unique_count": int(len(unique_values)),
             "is_numeric": bool(is_numeric),
             "integer_like": bool(integer_like),
+            "normalization_applied": bool(
+                self.normalization_map_ and source_unique_values.tolist() != unique_values.tolist()
+            ),
+            "normalization_map": {
+                str(source_value): mapped_value
+                for source_value, mapped_value in self.normalization_map_.items()
+                if source_value in source_unique_values and source_value != mapped_value
+            },
             "strategy": self.task_type,
             "notes": self._strategy_note(),
         }
@@ -98,13 +118,32 @@ class TargetManager:
         return {
             "task_type": self.task_type,
             "classes": self.classes_,
+            "source_classes": self.source_classes_ or self.classes_,
             "target_min": self.target_min_,
             "target_max": self.target_max_,
+            "normalization_map": {
+                str(source_value): mapped_value
+                for source_value, mapped_value in self.normalization_map_.items()
+                if source_value != mapped_value
+            },
             "strategy_details": self.strategy_details_,
         }
 
     def _strategy_note(self) -> str:
+        normalization_applied = bool(self.normalization_map_ and (self.source_classes_ or self.classes_) != self.classes_)
         if self.task_type == "ordinal_multiclass_classification":
+            if normalization_applied:
+                changed_pairs = ", ".join(
+                    f"{source}->{mapped}"
+                    for source, mapped in self.normalization_map_.items()
+                    if source != mapped
+                )
+                return (
+                    "Original target labels were normalized before modeling "
+                    f"({changed_pairs}) so the deployed system exposes a cleaner business-facing risk scale. "
+                    "The normalized target remains numeric, ordered, and low cardinality, so the system uses "
+                    "ordinal-aware metrics during model selection."
+                )
             return (
                 "Target is numeric, integer-like, and low cardinality, so the system preserves the ordered "
                 "risk meaning and uses ordinal-aware metrics during model selection."

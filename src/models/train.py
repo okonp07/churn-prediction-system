@@ -5,7 +5,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -21,6 +20,12 @@ from src.features.build_features import ChurnFeatureBuilder
 from src.models.evaluate import compute_metrics
 from src.models.select_model import compute_selection_score
 from src.models.target_manager import TargetManager
+
+try:
+    from lightgbm import LGBMClassifier, LGBMRegressor
+except ImportError:  # pragma: no cover - exercised indirectly when dependency is absent
+    LGBMClassifier = None
+    LGBMRegressor = None
 
 
 @dataclass
@@ -85,20 +90,6 @@ def build_candidate_estimators(
             xgb_params["num_class"] = n_classes
         xgb_estimator = XGBClassifier(**xgb_params)
 
-        lgbm_params = {
-            "objective": "multiclass" if n_classes > 2 else "binary",
-            "n_estimators": 350,
-            "learning_rate": 0.05,
-            "num_leaves": 31,
-            "subsample": 0.85,
-            "colsample_bytree": 0.8,
-            "min_child_samples": 30,
-            "class_weight": "balanced",
-            "random_state": settings.random_seed,
-        }
-        if n_classes > 2:
-            lgbm_params["num_class"] = n_classes
-        lgbm_estimator = LGBMClassifier(**lgbm_params)
         candidates = {
             "logistic_regression": Pipeline(
                 steps=[
@@ -135,13 +126,27 @@ def build_candidate_estimators(
                     ("model", xgb_estimator),
                 ]
             ),
-            "lightgbm": Pipeline(
+        }
+        if LGBMClassifier is not None:
+            lgbm_params = {
+                "objective": "multiclass" if n_classes > 2 else "binary",
+                "n_estimators": 350,
+                "learning_rate": 0.05,
+                "num_leaves": 31,
+                "subsample": 0.85,
+                "colsample_bytree": 0.8,
+                "min_child_samples": 30,
+                "class_weight": "balanced",
+                "random_state": settings.random_seed,
+            }
+            if n_classes > 2:
+                lgbm_params["num_class"] = n_classes
+            candidates["lightgbm"] = Pipeline(
                 steps=[
                     ("preprocessor", build_preprocessor(numerical_columns, categorical_columns, scale_numeric=False)),
-                    ("model", lgbm_estimator),
+                    ("model", LGBMClassifier(**lgbm_params)),
                 ]
-            ),
-        }
+            )
         return candidates
 
     candidates = {
@@ -187,7 +192,9 @@ def build_candidate_estimators(
                 ),
             ]
         ),
-        "lightgbm_regressor": Pipeline(
+    }
+    if LGBMRegressor is not None:
+        candidates["lightgbm_regressor"] = Pipeline(
             steps=[
                 ("preprocessor", build_preprocessor(numerical_columns, categorical_columns, scale_numeric=False)),
                 (
@@ -203,8 +210,7 @@ def build_candidate_estimators(
                     ),
                 ),
             ]
-        ),
-    }
+        )
     return candidates
 
 

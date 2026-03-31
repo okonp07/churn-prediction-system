@@ -72,32 +72,22 @@
   },
   "best_model_name": "xgboost",
   "best_model_metrics": {
-    "accuracy": 0.7571293418029463,
-    "precision_macro": 0.6199583542241812,
-    "recall_macro": 0.6392501717318712,
-    "f1_macro": 0.6240201114480678,
-    "f1_weighted": 0.7387881817967614,
+    "accuracy": 0.7619948641708338,
+    "precision_macro": 0.7621451922564536,
+    "recall_macro": 0.728122363451934,
+    "f1_macro": 0.737259448816859,
+    "f1_weighted": 0.7548594106034723,
     "confusion_matrix": [
       [
-        0,
-        23,
-        15,
-        70,
-        53,
-        72
+        472,
+        90,
+        63,
+        48,
+        90
       ],
       [
-        0,
-        418,
-        112,
-        0,
-        0,
-        0
-      ],
-      [
-        0,
-        179,
-        369,
+        191,
+        357,
         0,
         0,
         0
@@ -105,21 +95,18 @@
       [
         0,
         0,
-        0,
-        1922,
-        163,
+        1920,
+        165,
         0
       ],
       [
         0,
         0,
-        0,
-        197,
-        1121,
-        719
+        190,
+        1117,
+        730
       ],
       [
-        0,
         0,
         0,
         0,
@@ -127,16 +114,23 @@
         1772
       ]
     ],
-    "quadratic_weighted_kappa": 0.799420716773217,
-    "ordinal_mae": 0.32423300446006215,
-    "log_loss": 0.4848862632103303,
-    "roc_auc_ovr_weighted": 0.9395634738634632,
-    "pr_auc_ovr_weighted": 0.8334839808033133
+    "quadratic_weighted_kappa": 0.8418626894455488,
+    "ordinal_mae": 0.29598594404649275,
+    "log_loss": 0.4642007065549046,
+    "roc_auc_ovr_weighted": 0.9410257189314781,
+    "pr_auc_ovr_weighted": 0.8467414129653753
   },
-  "candidate_model_count": 4,
+  "candidate_model_count": 3,
   "task_detection": {
     "task_type": "ordinal_multiclass_classification",
     "classes": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "source_classes": [
       -1,
       1,
       2,
@@ -146,8 +140,11 @@
     ],
     "target_min": null,
     "target_max": null,
+    "normalization_map": {
+      "-1": 1
+    },
     "strategy_details": {
-      "unique_values": [
+      "source_unique_values": [
         -1,
         1,
         2,
@@ -155,12 +152,45 @@
         4,
         5
       ],
-      "unique_count": 6,
+      "unique_values": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "unique_count": 5,
       "is_numeric": true,
       "integer_like": true,
+      "normalization_applied": true,
+      "normalization_map": {
+        "-1": 1
+      },
       "strategy": "ordinal_multiclass_classification",
-      "notes": "Target is numeric, integer-like, and low cardinality, so the system preserves the ordered risk meaning and uses ordinal-aware metrics during model selection."
+      "notes": "Original target labels were normalized before modeling (-1->1) so the deployed system exposes a cleaner business-facing risk scale. The normalized target remains numeric, ordered, and low cardinality, so the system uses ordinal-aware metrics during model selection."
     }
+  },
+  "target_normalization": {
+    "applied": true,
+    "source_classes": [
+      -1,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "normalized_classes": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "mapping": {
+      "-1": 1
+    },
+    "notes": "The raw churn labels were normalized to a business-friendly 1-to-5 scale before training. The legacy '-1' tier is merged into score '1', so score 1 now represents the lowest-risk customers."
   },
   "feature_summary": {
     "reference_date": "2018-01-01",

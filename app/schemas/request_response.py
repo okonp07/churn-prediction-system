@@ -84,6 +84,7 @@ class ModelInfoResponse(BaseModel):
     project_version: str
     trained_at: str
     task_detection: dict[str, Any]
+    target_normalization: dict[str, Any] | None = None
     reference_date: str
     best_model_name: str
     validation_metrics: dict[str, Any]

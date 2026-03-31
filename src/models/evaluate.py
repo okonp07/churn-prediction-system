@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.calibration import calibration_curve
@@ -24,6 +23,11 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 
 from src.models.target_manager import TargetManager
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:  # pragma: no cover - exercised indirectly when dependency is absent
+    plt = None
 
 
 def quadratic_weighted_kappa(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -113,6 +117,8 @@ def plot_confusion_matrix(
     class_labels: list[str],
     output_path: str | Path,
 ) -> None:
+    if plt is None:
+        return
     figure, axis = plt.subplots(figsize=(8, 6))
     axis.imshow(matrix, cmap="Blues")
     axis.set_xticks(range(len(class_labels)))
@@ -134,6 +140,8 @@ def plot_confusion_matrix(
 
 
 def plot_target_distribution(target: pd.Series, output_path: str | Path) -> None:
+    if plt is None:
+        return
     figure, axis = plt.subplots(figsize=(8, 4))
     target.value_counts().sort_index().plot(kind="bar", color="#28536B", ax=axis)
     axis.set_title("Target Distribution")
@@ -150,6 +158,8 @@ def plot_calibration_curve(
     y_score: np.ndarray,
     output_path: str | Path,
 ) -> None:
+    if plt is None:
+        return
     fraction_of_positives, mean_predicted_value = calibration_curve(
         y_true_binary, y_score, n_bins=10, strategy="uniform"
     )

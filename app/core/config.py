@@ -26,6 +26,7 @@ class AppSettings:
     high_risk_top_n_classes: int
     feature_importance_top_n: int
     batch_prediction_output: str
+    target_normalization_map: dict[str, int] = field(default_factory=dict)
     artifacts: dict[str, str] = field(default_factory=dict)
     project_root: Path = PROJECT_ROOT
 

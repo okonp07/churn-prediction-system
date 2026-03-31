@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 
 from app.core.config import PROJECT_ROOT, get_settings
 from app.services.predictor import PredictorService
+from src.data.target_normalization import normalize_target_frame
 
 
 BANNER_PATH = PROJECT_ROOT / "Churn Prediction Engine.png"
@@ -119,7 +120,8 @@ def load_predictor() -> PredictorService:
 @st.cache_data
 def load_training_data() -> pd.DataFrame:
     settings = get_settings()
-    return pd.read_csv(settings.raw_data_dir / "train.csv")
+    raw_frame = pd.read_csv(settings.raw_data_dir / "train.csv")
+    return normalize_target_frame(raw_frame, settings.target_column, settings.target_normalization_map)
 
 
 @st.cache_data
@@ -995,10 +997,13 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
     model_info = predictor.model_info()
     validation_metrics = model_info["validation_metrics"]
     task_detection = model_info["task_detection"]
+    normalization_info = model_info.get("target_normalization") or {}
     feature_summary = model_info["feature_summary"]
     training_report = metrics_payload["training_validation_report"]
     test_report = metrics_payload["test_validation_report"]
     top_features = [item["base_feature"] for item in model_info["global_feature_importance"][:3]]
+    source_classes = normalization_info.get("source_classes", task_detection.get("source_classes", task_detection["classes"]))
+    normalized_classes = normalization_info.get("normalized_classes", task_detection["classes"])
 
     st.markdown(
         """
@@ -1070,6 +1075,7 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
             <h3>At a Glance</h3>
             <ul>
                 <li><strong>Task Type:</strong> {task_type_label} with {len(task_detection['classes'])} ordered classes detected in the target.</li>
+                <li><strong>Business Score Scale:</strong> The deployed system reports churn from {normalized_classes[0]} (lowest risk) to {normalized_classes[-1]} (highest risk).</li>
                 <li><strong>Candidate Models:</strong> {metrics_payload["candidate_model_count"]} models were benchmarked under the same validation protocol.</li>
                 <li><strong>Top Drivers:</strong> {", ".join(top_features)} were the most influential features in the final model.</li>
                 <li><strong>Reference Date:</strong> {feature_summary["reference_date"]} was used to compute tenure consistently across training and inference.</li>
@@ -1096,8 +1102,9 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
     st.markdown("### Key Insights")
     st.markdown(
         f"""
-        - The target was automatically detected as an ordinal multiclass problem with classes `{task_detection['classes']}`. These classes are ordered from lower churn risk to higher churn risk, so a score closer to `-1` is more desirable and a score closer to `5` means the customer is at much higher risk of churning.
-        - In practical terms, `-1` and `1` sit at the safer end of the scale, `2` and `3` represent moderate concern, and `4` and `5` indicate the strongest churn warning signals. There is no `0` class because the source dataset itself is encoded as `[-1, 1, 2, 3, 4, 5]`.
+        - The target was automatically detected as an ordinal multiclass problem on the normalized classes `{task_detection['classes']}`. These classes are ordered from lower churn risk to higher churn risk, so a score closer to `1` is more desirable and a score closer to `5` means the customer is at much higher risk of churning.
+        - The original dataset encoded churn as `{source_classes}`. To make the deployed score easier for business users to interpret, the pipeline normalizes those labels to `{normalized_classes}` by merging the raw `-1` tier into score `1`.
+        - In practical terms, `1` represents the safest customers, `2` and `3` indicate increasing concern, `4` signals high risk, and `5` marks the highest churn warning level.
         - `XGBoost` was selected from `{metrics_payload['candidate_model_count']}` candidate models after model comparison.
         - Validation performance was strong with `Weighted F1 = {validation_metrics.get('f1_weighted', 0):.3f}`, `Accuracy = {validation_metrics.get('accuracy', 0):.3f}`, and `QWK = {validation_metrics.get('quadratic_weighted_kappa', 0):.3f}`.
         - The most important risk signals were `{top_features[0]}`, `{top_features[1]}`, and `{top_features[2]}`, which align with customer value, feedback, and membership behavior.
@@ -1113,6 +1120,9 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
             st.json(validation_metrics)
             st.markdown("**Task Detection**")
             st.json(task_detection)
+            if normalization_info:
+                st.markdown("**Target Normalization**")
+                st.json(normalization_info)
         with detail_columns[1]:
             st.markdown("**Training Data Validation**")
             st.json(training_report)
@@ -1293,7 +1303,7 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
         train_df,
         x="churn_risk_score",
         color="churn_risk_score",
-        title="Observed Churn Risk Distribution",
+        title="Observed Churn Risk Distribution (Normalized 1-5 Scale)",
         color_discrete_sequence=["#f4c430", "#eab308", "#ca8a04", "#fde68a", "#facc15", "#f59e0b"],
     )
     apply_plotly_theme(histogram, theme)
@@ -1306,7 +1316,8 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
                 This chart shows how customers are currently spread across the churn risk classes in the training
                 data. Taller bars mean more customers fall into that risk level. A non-technical viewer can read this
                 as the model's starting view of the business: which churn levels are common, which are rare, and
-                whether the system is mostly dealing with low-risk, medium-risk, or high-risk customers.
+                whether the system is mostly dealing with low-risk, medium-risk, or high-risk customers on the final
+                1-to-5 score scale.
             </p>
         </div>
         """,
@@ -1491,10 +1502,11 @@ def render_about_page() -> None:
             <p>
                 The model assumes that historical customer behavior contains stable warning patterns that can be used to
                 estimate future churn risk. It assumes the provided churn risk score is a valid ordered business target,
-                that engagement and complaint signals are informative proxies for loyalty health, and that the dataset
-                snapshot is representative enough for deployment-style scoring. It also assumes that the strongest
-                interventions come from combining statistical model output with deterministic business rules, which is
-                why this solution pairs predictive scoring with recommendation logic instead of returning a bare number.
+                and this implementation further assumes the raw `-1` tier can be safely merged into score `1` so the
+                deployed system exposes a simpler 1-to-5 risk scale. It also assumes that engagement and complaint
+                signals are informative proxies for loyalty health, that the dataset snapshot is representative enough
+                for deployment-style scoring, and that the strongest interventions come from combining statistical model
+                output with deterministic business rules rather than returning a bare number.
             </p>
             <p>
                 A further assumption is that human-readable explanations matter. In practice, business users need to

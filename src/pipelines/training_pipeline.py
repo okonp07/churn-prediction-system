@@ -14,6 +14,11 @@ from app.core.config import PROJECT_ROOT, get_settings
 from app.core.logger import setup_logger
 from app.utils.helpers import flatten_metric_payload
 from src.data.load_data import load_test_data, load_train_data
+from src.data.target_normalization import (
+    describe_target_normalization,
+    normalize_target_frame,
+    resolve_target_normalization_map,
+)
 from src.data.validate_data import validate_inference_frame, validate_training_frame
 from src.features.build_features import ChurnFeatureBuilder
 from src.models.evaluate import (
@@ -99,12 +104,24 @@ def run_training_pipeline(
     if not test_report.is_valid:
         raise ValueError(f"Test data validation failed: {test_report.to_dict()}")
 
-    target_manager = TargetManager().fit(train_frame[settings.target_column])
+    normalization_map = resolve_target_normalization_map(settings.target_normalization_map)
+    normalized_train_frame = normalize_target_frame(train_frame, settings.target_column, normalization_map)
+    normalization_summary = describe_target_normalization(
+        train_frame[settings.target_column],
+        normalized_train_frame[settings.target_column],
+        normalization_map,
+    )
+
+    target_manager = TargetManager().fit(
+        normalized_train_frame[settings.target_column],
+        original_target=train_frame[settings.target_column],
+        normalization_map=normalization_map,
+    )
     LOGGER.info("Detected task type: %s", target_manager.task_type)
 
     feature_builder = ChurnFeatureBuilder()
-    features = feature_builder.fit_transform(train_frame.drop(columns=[settings.target_column]))
-    encoded_target = target_manager.transform(train_frame[settings.target_column])
+    features = feature_builder.fit_transform(normalized_train_frame.drop(columns=[settings.target_column]))
+    encoded_target = target_manager.transform(normalized_train_frame[settings.target_column])
 
     best_result, all_results, holdout_payload = train_and_select_model(
         features=features,
@@ -123,6 +140,7 @@ def run_training_pipeline(
             "project_version": settings.project_version,
             "trained_at": datetime.now(timezone.utc).isoformat(),
             "task_detection": target_manager.metadata(),
+            "target_normalization": normalization_summary,
             "reference_date": str(feature_builder.reference_date.date()),
             "validation_metrics": flatten_metric_payload(best_result.validation_metrics),
             "candidate_models": [
@@ -165,12 +183,13 @@ def run_training_pipeline(
         "best_model_metrics": flatten_metric_payload(best_result.validation_metrics),
         "candidate_model_count": len(all_results),
         "task_detection": target_manager.metadata(),
+        "target_normalization": normalization_summary,
         "feature_summary": feature_builder.get_feature_summary(),
     }
     save_json(summary_payload, settings.metrics_path)
 
     plot_target_distribution(
-        train_frame[settings.target_column],
+        normalized_train_frame[settings.target_column],
         PROJECT_ROOT / "artifacts" / "plots" / "target_distribution.png",
     )
 

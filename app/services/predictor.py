@@ -103,6 +103,7 @@ class PredictorService:
             "project_version": metadata["project_version"],
             "trained_at": metadata["trained_at"],
             "task_detection": metadata["task_detection"],
+            "target_normalization": metadata.get("target_normalization"),
             "reference_date": metadata["reference_date"],
             "best_model_name": metadata["best_model_name"],
             "validation_metrics": metadata["validation_metrics"],

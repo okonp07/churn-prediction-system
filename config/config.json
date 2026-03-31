@@ -3,6 +3,14 @@
   "project_version": "1.0.0",
   "random_seed": 42,
   "target_column": "churn_risk_score",
+  "target_normalization_map": {
+    "-1": 1,
+    "1": 1,
+    "2": 2,
+    "3": 3,
+    "4": 4,
+    "5": 5
+  },
   "id_columns": [
     "customer_id"
   ],
