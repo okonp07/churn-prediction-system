@@ -18,4 +18,6 @@ def test_model_metadata_reports_normalized_classes(ensure_trained_bundle) -> Non
     model_info = predictor.model_info()
 
     assert model_info["task_detection"]["classes"] == [1, 2, 3, 4, 5]
-    assert model_info["target_normalization"]["mapping"] == {"-1": 1}
+    assert model_info["target_normalization"]["normalized_classes"] == [1, 2, 3, 4, 5]
+    assert model_info["target_normalization"]["lowest_risk_class"] == 1
+    assert model_info["target_normalization"]["highest_risk_class"] == 5

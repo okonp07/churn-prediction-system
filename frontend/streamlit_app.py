@@ -1002,7 +1002,6 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
     training_report = metrics_payload["training_validation_report"]
     test_report = metrics_payload["test_validation_report"]
     top_features = [item["base_feature"] for item in model_info["global_feature_importance"][:3]]
-    source_classes = normalization_info.get("source_classes", task_detection.get("source_classes", task_detection["classes"]))
     normalized_classes = normalization_info.get("normalized_classes", task_detection["classes"])
 
     st.markdown(
@@ -1102,8 +1101,8 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
     st.markdown("### Key Insights")
     st.markdown(
         f"""
-        - The target was automatically detected as an ordinal multiclass problem on the normalized classes `{task_detection['classes']}`. These classes are ordered from lower churn risk to higher churn risk, so a score closer to `1` is more desirable and a score closer to `5` means the customer is at much higher risk of churning.
-        - The original dataset encoded churn as `{source_classes}`. To make the deployed score easier for business users to interpret, the pipeline normalizes those labels to `{normalized_classes}` by merging the raw `-1` tier into score `1`.
+        - The target was automatically detected as an ordinal multiclass problem on the final classes `{task_detection['classes']}`. These classes are ordered from lower churn risk to higher churn risk, so a score closer to `1` is more desirable and a score closer to `5` means the customer is at much higher risk of churning.
+        - The deployed system uses a consistent business scale of `{normalized_classes}`, so users can read every prediction as a clean churn score from `1` to `5`.
         - In practical terms, `1` represents the safest customers, `2` and `3` indicate increasing concern, `4` signals high risk, and `5` marks the highest churn warning level.
         - `XGBoost` was selected from `{metrics_payload['candidate_model_count']}` candidate models after model comparison.
         - Validation performance was strong with `Weighted F1 = {validation_metrics.get('f1_weighted', 0):.3f}`, `Accuracy = {validation_metrics.get('accuracy', 0):.3f}`, and `QWK = {validation_metrics.get('quadratic_weighted_kappa', 0):.3f}`.
@@ -1502,8 +1501,7 @@ def render_about_page() -> None:
             <p>
                 The model assumes that historical customer behavior contains stable warning patterns that can be used to
                 estimate future churn risk. It assumes the provided churn risk score is a valid ordered business target,
-                and this implementation further assumes the raw `-1` tier can be safely merged into score `1` so the
-                deployed system exposes a simpler 1-to-5 risk scale. It also assumes that engagement and complaint
+                that the deployed 1-to-5 risk scale is appropriate for decision-making, that engagement and complaint
                 signals are informative proxies for loyalty health, that the dataset snapshot is representative enough
                 for deployment-style scoring, and that the strongest interventions come from combining statistical model
                 output with deterministic business rules rather than returning a bare number.

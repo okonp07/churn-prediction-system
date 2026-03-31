@@ -47,19 +47,11 @@ class TargetManager:
             self.target_max_ = float(clean_target.max())
 
         self.strategy_details_ = {
-            "source_unique_values": source_unique_values.tolist(),
             "unique_values": unique_values.tolist(),
             "unique_count": int(len(unique_values)),
             "is_numeric": bool(is_numeric),
             "integer_like": bool(integer_like),
-            "normalization_applied": bool(
-                self.normalization_map_ and source_unique_values.tolist() != unique_values.tolist()
-            ),
-            "normalization_map": {
-                str(source_value): mapped_value
-                for source_value, mapped_value in self.normalization_map_.items()
-                if source_value in source_unique_values and source_value != mapped_value
-            },
+            "normalization_applied": bool(self.normalization_map_ and source_unique_values.tolist() != unique_values.tolist()),
             "strategy": self.task_type,
             "notes": self._strategy_note(),
         }
@@ -118,14 +110,8 @@ class TargetManager:
         return {
             "task_type": self.task_type,
             "classes": self.classes_,
-            "source_classes": self.source_classes_ or self.classes_,
             "target_min": self.target_min_,
             "target_max": self.target_max_,
-            "normalization_map": {
-                str(source_value): mapped_value
-                for source_value, mapped_value in self.normalization_map_.items()
-                if source_value != mapped_value
-            },
             "strategy_details": self.strategy_details_,
         }
 
@@ -133,15 +119,10 @@ class TargetManager:
         normalization_applied = bool(self.normalization_map_ and (self.source_classes_ or self.classes_) != self.classes_)
         if self.task_type == "ordinal_multiclass_classification":
             if normalization_applied:
-                changed_pairs = ", ".join(
-                    f"{source}->{mapped}"
-                    for source, mapped in self.normalization_map_.items()
-                    if source != mapped
-                )
                 return (
-                    "Original target labels were normalized before modeling "
-                    f"({changed_pairs}) so the deployed system exposes a cleaner business-facing risk scale. "
-                    "The normalized target remains numeric, ordered, and low cardinality, so the system uses "
+                    "Target labels were normalized before modeling so the deployed system exposes "
+                    "a clean business-facing risk scale. "
+                    "The final target remains numeric, ordered, and low cardinality, so the system uses "
                     "ordinal-aware metrics during model selection."
                 )
             return (

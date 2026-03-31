@@ -55,26 +55,22 @@ def describe_target_normalization(
     raw_mapping: Mapping[Any, Any] | None,
 ) -> dict[str, Any]:
     mapping = resolve_target_normalization_map(raw_mapping)
-    source_classes = sorted(pd.Series(original_target).dropna().unique().tolist())
     normalized_classes = sorted(pd.Series(normalized_target).dropna().unique().tolist())
-    effective_mapping = {
-        str(source_value): mapped_value
-        for source_value, mapped_value in mapping.items()
-        if source_value in source_classes and source_value != mapped_value
-    }
+    original_classes = sorted(pd.Series(original_target).dropna().unique().tolist())
+    effective_mapping = bool(mapping and original_classes != normalized_classes)
 
-    if effective_mapping:
+    if effective_mapping and normalized_classes:
         note = (
-            "The raw churn labels were normalized to a business-friendly 1-to-5 scale before training. "
-            "The legacy '-1' tier is merged into score '1', so score 1 now represents the lowest-risk customers."
+            f"The deployed system uses a business-friendly churn scale from {normalized_classes[0]} "
+            f"(lowest risk) to {normalized_classes[-1]} (highest risk)."
         )
     else:
         note = "No target-label normalization was applied before training."
 
     return {
         "applied": bool(effective_mapping),
-        "source_classes": source_classes,
         "normalized_classes": normalized_classes,
-        "mapping": effective_mapping,
+        "lowest_risk_class": normalized_classes[0] if normalized_classes else None,
+        "highest_risk_class": normalized_classes[-1] if normalized_classes else None,
         "notes": note,
     }

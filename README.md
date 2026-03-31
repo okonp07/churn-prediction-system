@@ -24,7 +24,7 @@ The system automatically inspects `churn_risk_score` before modeling:
 - Low-cardinality integer target: ordinal-aware multiclass classification
 - Higher-cardinality target: regression
 
-For this dataset, the raw target values were originally `[-1, 1, 2, 3, 4, 5]`. The production pipeline normalizes that into a cleaner business-facing scale of `[1, 2, 3, 4, 5]` by merging the legacy `-1` tier into score `1`, where `1` is the lowest churn risk and `5` is the highest. The system then treats the target as ordinal multiclass classification and uses weighted F1, quadratic weighted kappa, and ordinal MAE during model selection.
+For this dataset, the production pipeline uses a clean business-facing churn scale of `[1, 2, 3, 4, 5]`, where `1` is the lowest churn risk and `5` is the highest. The system treats the target as ordinal multiclass classification and uses weighted F1, quadratic weighted kappa, and ordinal MAE during model selection.
 
 ## Project Structure
 
@@ -201,6 +201,6 @@ pytest
 
 ## Assumptions
 
-- The raw `-1` target value is merged into churn score `1` so the deployed system exposes a cleaner and more interpretable `1` to `5` business scale.
+- The deployed application exposes churn on a clean and interpretable `1` to `5` business scale.
 - Tenure is computed against the dataset snapshot reference date learned during training so inference stays consistent with model training.
 - Recommendations combine model signals with deterministic business rules to stay readable and reliable in demos.

@@ -130,28 +130,9 @@
       4,
       5
     ],
-    "source_classes": [
-      -1,
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
     "target_min": null,
     "target_max": null,
-    "normalization_map": {
-      "-1": 1
-    },
     "strategy_details": {
-      "source_unique_values": [
-        -1,
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
       "unique_values": [
         1,
         2,
@@ -163,23 +144,12 @@
       "is_numeric": true,
       "integer_like": true,
       "normalization_applied": true,
-      "normalization_map": {
-        "-1": 1
-      },
       "strategy": "ordinal_multiclass_classification",
-      "notes": "Original target labels were normalized before modeling (-1->1) so the deployed system exposes a cleaner business-facing risk scale. The normalized target remains numeric, ordered, and low cardinality, so the system uses ordinal-aware metrics during model selection."
+      "notes": "Target labels were normalized before modeling so the deployed system exposes a clean business-facing risk scale. The final target remains numeric, ordered, and low cardinality, so the system uses ordinal-aware metrics during model selection."
     }
   },
   "target_normalization": {
     "applied": true,
-    "source_classes": [
-      -1,
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
     "normalized_classes": [
       1,
       2,
@@ -187,10 +157,9 @@
       4,
       5
     ],
-    "mapping": {
-      "-1": 1
-    },
-    "notes": "The raw churn labels were normalized to a business-friendly 1-to-5 scale before training. The legacy '-1' tier is merged into score '1', so score 1 now represents the lowest-risk customers."
+    "lowest_risk_class": 1,
+    "highest_risk_class": 5,
+    "notes": "The deployed system uses a business-friendly churn scale from 1 (lowest risk) to 5 (highest risk)."
   },
   "feature_summary": {
     "reference_date": "2018-01-01",
