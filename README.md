@@ -1,5 +1,11 @@
 # Churn Prediction System
 
+[![Live Streamlit App](https://img.shields.io/badge/Live%20App-Open%20Streamlit-black?style=for-the-badge&logo=streamlit&logoColor=white)](https://churn-prediction-system-d26clfwqqdxokbwmysq7ek.streamlit.app/)
+
+## Live Demo
+
+[Launch the Streamlit app](https://churn-prediction-system-d26clfwqqdxokbwmysq7ek.streamlit.app/)
+
 This project upgrades the original notebook into a production-style churn prediction platform. It trains a stronger leakage-safe model, exposes predictions through FastAPI, provides a Streamlit interface for stakeholders, explains predictions, and returns deterministic retention recommendations.
 
 ## Architecture Summary
