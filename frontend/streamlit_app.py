@@ -143,6 +143,79 @@ def encode_image(path: str) -> str:
     return base64.b64encode(Path(path).read_bytes()).decode("utf-8")
 
 
+def _join_text_list(value: object) -> str:
+    if isinstance(value, list):
+        return " | ".join(str(item) for item in value if item not in {None, ""})
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    return str(value)
+
+
+def _json_text(value: object) -> str:
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return ""
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=isinstance(value, dict))
+    return str(value)
+
+
+def build_batch_results_frame(predictions: list[dict]) -> pd.DataFrame:
+    frame = pd.DataFrame(predictions)
+    if frame.empty:
+        return frame
+
+    formatted = frame.copy()
+
+    if "top_risk_drivers" in formatted.columns:
+        formatted["top_risk_drivers"] = formatted["top_risk_drivers"].apply(_join_text_list)
+
+    if "recommendations" in formatted.columns:
+        formatted["recommendations"] = formatted["recommendations"].apply(_join_text_list)
+
+    if "probability_breakdown" in formatted.columns:
+        probability_columns = (
+            pd.json_normalize(
+                formatted["probability_breakdown"].apply(
+                    lambda value: value if isinstance(value, dict) else {}
+                )
+            )
+            .rename(columns=lambda column: f"probability_class_{column}")
+        )
+        formatted = pd.concat(
+            [formatted.drop(columns=["probability_breakdown"]), probability_columns],
+            axis=1,
+        )
+
+    if "driver_details" in formatted.columns:
+        formatted["driver_details_json"] = formatted["driver_details"].apply(_json_text)
+        formatted = formatted.drop(columns=["driver_details"])
+
+    preferred_order = [
+        "customer_id",
+        "predicted_class",
+        "predicted_label",
+        "risk_score",
+        "risk_band",
+        "confidence",
+        "top_risk_drivers",
+        "recommendations",
+    ]
+    probability_order = sorted(
+        [column for column in formatted.columns if column.startswith("probability_class_")],
+        key=lambda column: float(column.rsplit("_", 1)[-1]),
+    )
+    remaining = [
+        column
+        for column in formatted.columns
+        if column not in preferred_order and column not in probability_order
+    ]
+    ordered_columns = [
+        column for column in preferred_order if column in formatted.columns
+    ] + probability_order + remaining
+
+    return formatted[ordered_columns]
+
+
 def inject_styles(theme_mode: str) -> None:
     theme = DARK_THEME if theme_mode == "Dark" else LIGHT_THEME
     css = """
@@ -1321,7 +1394,7 @@ def render_batch_page(predictor: PredictorService) -> None:
     if upload is not None:
         frame = pd.read_csv(upload)
         predictions = predictor.predict_batch(frame)
-        prediction_frame = pd.DataFrame(predictions)
+        prediction_frame = build_batch_results_frame(predictions)
         st.dataframe(prediction_frame, use_container_width=True)
         st.download_button(
             label="Download Scored Results",
