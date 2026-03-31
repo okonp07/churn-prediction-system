@@ -310,6 +310,16 @@ def inject_styles(theme_mode: str) -> None:
             padding: 1.25rem 1.35rem;
             margin-bottom: 1rem;
         }}
+        .content-card ul {{
+            margin: 0.65rem 0 0;
+            padding-left: 1.25rem;
+        }}
+        .content-card li {{
+            margin-bottom: 0.55rem;
+        }}
+        .content-card li:last-child {{
+            margin-bottom: 0;
+        }}
         .metric-card {{
             background: var(--card-soft);
             border: 1px solid var(--border);
@@ -1048,31 +1058,25 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
         unsafe_allow_html=True,
     )
 
-    summary_columns = st.columns(4)
-    with summary_columns[0]:
-        render_model_summary_card(
-            "Task Type",
-            "Ordinal Multiclass" if task_detection["task_type"] == "ordinal_multiclass_classification" else task_detection["task_type"].replace("_", " ").title(),
-            f"{len(task_detection['classes'])} ordered classes detected in the target.",
-        )
-    with summary_columns[1]:
-        render_model_summary_card(
-            "Candidate Models",
-            str(metrics_payload["candidate_model_count"]),
-            "Benchmarked and compared on the same validation protocol.",
-        )
-    with summary_columns[2]:
-        render_model_summary_card(
-            "Top Drivers",
-            ", ".join(top_features),
-            "Most influential features in the final model.",
-        )
-    with summary_columns[3]:
-        render_model_summary_card(
-            "Reference Date",
-            feature_summary["reference_date"],
-            "Used to compute tenure consistently across training and inference.",
-        )
+    task_type_label = (
+        "Ordinal Multiclass"
+        if task_detection["task_type"] == "ordinal_multiclass_classification"
+        else task_detection["task_type"].replace("_", " ").title()
+    )
+    st.markdown(
+        f"""
+        <div class="content-card">
+            <h3>At a Glance</h3>
+            <ul>
+                <li><strong>Task Type:</strong> {task_type_label} with {len(task_detection['classes'])} ordered classes detected in the target.</li>
+                <li><strong>Candidate Models:</strong> {metrics_payload["candidate_model_count"]} models were benchmarked under the same validation protocol.</li>
+                <li><strong>Top Drivers:</strong> {", ".join(top_features)} were the most influential features in the final model.</li>
+                <li><strong>Reference Date:</strong> {feature_summary["reference_date"]} was used to compute tenure consistently across training and inference.</li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown(
         """
