@@ -325,6 +325,8 @@ def render_overview_page(predictor: PredictorService, metrics_payload: dict) -> 
             "Ordinal alignment between predicted and true risk levels.",
         )
 
+    st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
+
     st.markdown(
         """
         <div class="content-card">
