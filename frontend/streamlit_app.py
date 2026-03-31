@@ -348,9 +348,9 @@ def inject_styles(theme_mode: str) -> None:
         }}
         .floating-appearance-panel {{
             position: fixed;
-            top: 0.95rem;
+            top: 5.4rem;
             left: 1rem;
-            z-index: 10050;
+            z-index: 2147483000;
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
@@ -360,6 +360,7 @@ def inject_styles(theme_mode: str) -> None:
             border: 1px solid var(--border);
             box-shadow: 0 16px 36px var(--glass-shadow);
             backdrop-filter: blur(18px);
+            pointer-events: auto;
         }}
         .appearance-link {{
             display: inline-flex;
@@ -645,7 +646,7 @@ def inject_styles(theme_mode: str) -> None:
         @media (max-width: 900px) {{
             .floating-appearance-panel {{
                 left: 0.75rem;
-                top: 0.75rem;
+                top: 5.15rem;
             }}
             .banner-nav {{
                 width: calc(100% - 1rem);
@@ -769,15 +770,30 @@ def inject_header_runtime_fix(theme_mode: str) -> None:
 
             function applyFix() {{
                 let doc = document;
+                let parentDoc = null;
                 try {{
                     if (window.parent && window.parent.document) {{
                         doc = window.parent.document;
+                        parentDoc = window.parent.document;
                     }}
                 }} catch (error) {{
                     doc = document;
+                    parentDoc = null;
                 }}
 
                 getHeaderControls(doc).forEach(styleControl);
+
+                const panelDoc = parentDoc || document;
+                const panel = panelDoc.querySelector(".floating-appearance-panel");
+                if (panel) {{
+                    const header =
+                        doc.querySelector('[data-testid="stHeader"]') ||
+                        doc.querySelector("header");
+                    const headerBottom = header ? header.getBoundingClientRect().bottom : 72;
+                    panel.style.top = `${{Math.max(headerBottom + 10, 72)}}px`;
+                    panel.style.left = "1rem";
+                    panel.style.zIndex = "2147483000";
+                }}
             }}
 
             applyFix();
