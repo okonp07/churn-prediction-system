@@ -142,6 +142,15 @@ def inject_styles(theme_mode: str) -> None:
             box-shadow: 0 10px 24px {toolbar_shadow};
             backdrop-filter: blur(12px);
         }}
+        [data-testid="stHeader"] button,
+        [data-testid="stHeader"] a,
+        [data-testid="stHeader"] [role="button"] {{
+            color: {toolbar_ink} !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            opacity: 1 !important;
+        }}
         [data-testid="stToolbar"] *,
         [data-testid="stHeaderActionElements"] *,
         button[data-testid^="baseButton-header"],
@@ -151,6 +160,19 @@ def inject_styles(theme_mode: str) -> None:
             color: {toolbar_ink} !important;
             fill: {toolbar_ink} !important;
             stroke: {toolbar_ink} !important;
+        }}
+        [data-testid="stHeader"] svg,
+        [data-testid="stHeader"] svg *,
+        [data-testid="stHeader"] path,
+        [data-testid="stHeader"] circle,
+        [data-testid="stHeader"] rect,
+        [data-testid="stHeader"] line,
+        [data-testid="stHeader"] polyline,
+        [data-testid="stHeader"] polygon {{
+            color: {toolbar_ink} !important;
+            fill: {toolbar_ink} !important;
+            stroke: {toolbar_ink} !important;
+            opacity: 1 !important;
         }}
         [data-testid="stToolbar"] svg,
         [data-testid="stHeaderActionElements"] svg,
@@ -169,7 +191,10 @@ def inject_styles(theme_mode: str) -> None:
         button[data-testid^="baseButton-header"]:hover,
         button[data-testid^="baseButton-headerNoPadding"]:hover,
         [data-testid="stToolbar"] a:hover,
-        [data-testid="stHeaderActionElements"] a:hover {{
+        [data-testid="stHeaderActionElements"] a:hover,
+        [data-testid="stHeader"] button:hover,
+        [data-testid="stHeader"] a:hover,
+        [data-testid="stHeader"] [role="button"]:hover {{
             background: {toolbar_hover} !important;
             color: {toolbar_hover_ink} !important;
         }}
@@ -186,7 +211,16 @@ def inject_styles(theme_mode: str) -> None:
         button[data-testid^="baseButton-header"]:hover svg,
         button[data-testid^="baseButton-headerNoPadding"]:hover svg,
         button[data-testid^="baseButton-header"]:hover path,
-        button[data-testid^="baseButton-headerNoPadding"]:hover path {{
+        button[data-testid^="baseButton-headerNoPadding"]:hover path,
+        [data-testid="stHeader"] button:hover svg,
+        [data-testid="stHeader"] a:hover svg,
+        [data-testid="stHeader"] [role="button"]:hover svg,
+        [data-testid="stHeader"] button:hover svg *,
+        [data-testid="stHeader"] a:hover svg *,
+        [data-testid="stHeader"] [role="button"]:hover svg *,
+        [data-testid="stHeader"] button:hover path,
+        [data-testid="stHeader"] a:hover path,
+        [data-testid="stHeader"] [role="button"]:hover path {{
             color: {toolbar_hover_ink} !important;
             fill: {toolbar_hover_ink} !important;
             stroke: {toolbar_hover_ink} !important;
