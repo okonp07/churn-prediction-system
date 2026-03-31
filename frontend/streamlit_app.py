@@ -40,6 +40,9 @@ DARK_THEME = {
     "widget_bg_soft": "rgba(30, 30, 30, 0.98)",
     "widget_ink": "#fff5bf",
     "caption_ink": "#d8c77c",
+    "primary_button_bg": "#f4c430",
+    "primary_button_ink": "#050505",
+    "primary_button_hover_bg": "#ffd54f",
     "score_low": "#ffde59",
     "score_medium": "#f4c430",
     "score_high": "#ff9f1c",
@@ -73,6 +76,9 @@ LIGHT_THEME = {
     "widget_bg_soft": "#fffaf0",
     "widget_ink": "#050505",
     "caption_ink": "#050505",
+    "primary_button_bg": "#050505",
+    "primary_button_ink": "#ffffff",
+    "primary_button_hover_bg": "#1a1a1a",
     "score_low": "#807000",
     "score_medium": "#b8860b",
     "score_high": "#d97706",
@@ -142,6 +148,9 @@ def inject_styles(theme_mode: str) -> None:
             --widget-bg-soft: {widget_bg_soft};
             --widget-ink: {widget_ink};
             --caption-ink: {caption_ink};
+            --primary-button-bg: {primary_button_bg};
+            --primary-button-ink: {primary_button_ink};
+            --primary-button-hover-bg: {primary_button_hover_bg};
         }}
         .stApp {{
             background: {app_bg};
@@ -358,8 +367,7 @@ def inject_styles(theme_mode: str) -> None:
         }}
         .stDownloadButton > button,
         .stButton > button,
-        button[data-testid^="baseButton-secondary"],
-        button[data-testid^="baseButton-primary"] {{
+        button[data-testid^="baseButton-secondary"] {{
             background: var(--widget-bg) !important;
             color: var(--widget-ink) !important;
             border: 1px solid var(--border) !important;
@@ -367,10 +375,20 @@ def inject_styles(theme_mode: str) -> None:
         }}
         .stDownloadButton > button:hover,
         .stButton > button:hover,
-        button[data-testid^="baseButton-secondary"]:hover,
-        button[data-testid^="baseButton-primary"]:hover {{
+        button[data-testid^="baseButton-secondary"]:hover {{
             background: var(--widget-bg-soft) !important;
             color: var(--widget-ink) !important;
+        }}
+        button[data-testid^="baseButton-primary"] {{
+            background: var(--primary-button-bg) !important;
+            color: var(--primary-button-ink) !important;
+            border: 1px solid var(--primary-button-bg) !important;
+            box-shadow: 0 10px 24px var(--shadow) !important;
+        }}
+        button[data-testid^="baseButton-primary"]:hover {{
+            background: var(--primary-button-hover-bg) !important;
+            color: var(--primary-button-ink) !important;
+            border: 1px solid var(--primary-button-hover-bg) !important;
         }}
         [data-testid="stWidgetLabel"] {{
             color: var(--widget-ink) !important;
