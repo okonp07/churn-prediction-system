@@ -36,6 +36,10 @@ DARK_THEME = {
     """,
     "chart_bg": "#111111",
     "chart_text": "#fff5bf",
+    "widget_bg": "rgba(20, 20, 20, 0.96)",
+    "widget_bg_soft": "rgba(30, 30, 30, 0.98)",
+    "widget_ink": "#fff5bf",
+    "caption_ink": "#d8c77c",
     "score_low": "#ffde59",
     "score_medium": "#f4c430",
     "score_high": "#ff9f1c",
@@ -65,6 +69,10 @@ LIGHT_THEME = {
     """,
     "chart_bg": "#fff8e6",
     "chart_text": "#050505",
+    "widget_bg": "#ffffff",
+    "widget_bg_soft": "#fffaf0",
+    "widget_ink": "#050505",
+    "caption_ink": "#050505",
     "score_low": "#807000",
     "score_medium": "#b8860b",
     "score_high": "#d97706",
@@ -130,6 +138,10 @@ def inject_styles(theme_mode: str) -> None:
             --accent-soft: {accent_soft};
             --border: {border};
             --shadow: {shadow};
+            --widget-bg: {widget_bg};
+            --widget-bg-soft: {widget_bg_soft};
+            --widget-ink: {widget_ink};
+            --caption-ink: {caption_ink};
         }}
         .stApp {{
             background: {app_bg};
@@ -341,8 +353,40 @@ def inject_styles(theme_mode: str) -> None:
             margin: 0.18rem 0;
         }}
         .caption-note {{
-            color: var(--muted);
+            color: var(--caption-ink);
             font-size: 0.95rem;
+        }}
+        .stDownloadButton > button,
+        .stButton > button,
+        button[data-testid^="baseButton-secondary"],
+        button[data-testid^="baseButton-primary"] {{
+            background: var(--widget-bg) !important;
+            color: var(--widget-ink) !important;
+            border: 1px solid var(--border) !important;
+            box-shadow: 0 10px 24px var(--shadow) !important;
+        }}
+        .stDownloadButton > button:hover,
+        .stButton > button:hover,
+        button[data-testid^="baseButton-secondary"]:hover,
+        button[data-testid^="baseButton-primary"]:hover {{
+            background: var(--widget-bg-soft) !important;
+            color: var(--widget-ink) !important;
+        }}
+        [data-testid="stWidgetLabel"] {{
+            color: var(--widget-ink) !important;
+        }}
+        [data-testid="stFileUploaderDropzone"] {{
+            background: var(--widget-bg) !important;
+            border: 1px solid var(--border) !important;
+            color: var(--widget-ink) !important;
+        }}
+        [data-testid="stFileUploaderDropzone"] * {{
+            color: var(--widget-ink) !important;
+        }}
+        [data-testid="stFileUploaderDropzone"] button {{
+            background: var(--widget-bg-soft) !important;
+            color: var(--widget-ink) !important;
+            border: 1px solid var(--border) !important;
         }}
         </style>
     """.format_map(theme)
