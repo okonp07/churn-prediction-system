@@ -588,6 +588,8 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
     train_df = load_training_data()
     model_info = predictor.model_info()
     importance_frame = pd.DataFrame(model_info["global_feature_importance"])
+    validation_metrics = model_info["validation_metrics"]
+    class_labels = [str(item) for item in model_info["task_detection"]["classes"]]
 
     histogram = px.histogram(
         train_df,
@@ -619,11 +621,50 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
     )
     st.plotly_chart(importance_chart, use_container_width=True)
 
-    plots_dir = PROJECT_ROOT / "artifacts" / "plots"
-    for image_name in ["confusion_matrix.png", "high_risk_calibration.png", "target_distribution.png"]:
-        image_path = plots_dir / image_name
-        if image_path.exists():
-            st.image(str(image_path), caption=image_name.replace("_", " ").replace(".png", "").title(), use_container_width=True)
+    confusion_matrix_values = validation_metrics.get("confusion_matrix", [])
+    if confusion_matrix_values:
+        confusion_df = pd.DataFrame(confusion_matrix_values, index=class_labels, columns=class_labels)
+        confusion_chart = px.imshow(
+            confusion_df,
+            text_auto=True,
+            color_continuous_scale=YELLOW_SCALE,
+            aspect="auto",
+            title="Validation Confusion Matrix",
+        )
+        confusion_chart.update_layout(
+            paper_bgcolor=theme["chart_bg"],
+            plot_bgcolor=theme["chart_bg"],
+            font_color=theme["ink"],
+            coloraxis_colorbar_title="Count",
+            xaxis_title="Predicted Class",
+            yaxis_title="Actual Class",
+        )
+        st.plotly_chart(confusion_chart, use_container_width=True)
+
+        actual_counts = confusion_df.sum(axis=1).reset_index()
+        actual_counts.columns = ["class", "count"]
+        actual_counts["type"] = "Actual"
+        predicted_counts = confusion_df.sum(axis=0).reset_index()
+        predicted_counts.columns = ["class", "count"]
+        predicted_counts["type"] = "Predicted"
+        support_df = pd.concat([actual_counts, predicted_counts], ignore_index=True)
+        support_chart = px.bar(
+            support_df,
+            x="class",
+            y="count",
+            color="type",
+            barmode="group",
+            color_discrete_sequence=["#f4c430", "#7a5c00"],
+            title="Actual vs Predicted Class Support",
+        )
+        support_chart.update_layout(
+            paper_bgcolor=theme["chart_bg"],
+            plot_bgcolor=theme["chart_bg"],
+            font_color=theme["ink"],
+            xaxis_title="Risk Class",
+            yaxis_title="Count",
+        )
+        st.plotly_chart(support_chart, use_container_width=True)
 
 
 def render_about_page() -> None:
