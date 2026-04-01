@@ -1575,12 +1575,10 @@ def render_insights_page(predictor: PredictorService, theme_mode: str) -> None:
 
 
 def render_about_page() -> None:
-    st.subheader("About the project")
-
     st.markdown(
         """
         <div class="content-card">
-            <h3>Why churn prediction matters to businesses</h3>
+            <h3>About the project</h3>
             <p>
                 Customer churn is one of the most expensive silent failures in business. Revenue does not usually
                 disappear all at once. It leaks away gradually as customers log in less often, spend less, complain
